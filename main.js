@@ -34,7 +34,7 @@ async function main() {
         item.url=company[2] || null
         item.subcategory=company[3] || null
         item.parentCategorySlug=company[4] || null
-        item.logo=company[5] || null
+        item.logo=company[5] 
         item.description=company[6] || null
         item.crunchbase=company[7] || null
         item.linkedin=company[8] || null
@@ -113,6 +113,6 @@ async function authorize() {
 
 app.get('/', function (req, res) {
 
-   res.send(sheetValues)
-   console.log("sheetValues",sheetValues)
+   res.status(200).send(sheetValues)
+
  })
