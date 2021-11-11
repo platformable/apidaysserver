@@ -109,7 +109,7 @@ async function main() {
  return sheetValues
 }
 
-
+main()
 
 
 async function authorize() {
@@ -125,7 +125,7 @@ async function authorize() {
 
 app.get('/', function (req, res) {
   
-      main()
+
    res.status(200).send(sheetValues)
 
  })
