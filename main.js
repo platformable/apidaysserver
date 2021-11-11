@@ -6,14 +6,16 @@ app.listen(process.env.PORT || 5000)
 const { google } = require("googleapis");
 const sheets = google.sheets("v4");
 
+
 const sheetValues = {
   date:"",
   values:[],
   categories:[]
 };
 
-
 async function main() {
+
+
   
   sheetValues.date=new Date;
   const authClient = await authorize();
@@ -104,11 +106,11 @@ async function main() {
   } catch (err) {
     console.error(err);
   }
-
+ return sheetValues
 }
 
 
-main()
+
 
 async function authorize() {
   let authClient = await process.env.NEXT_PUBLIC_GOOGLE_KEY;
@@ -119,9 +121,11 @@ async function authorize() {
 }
 
 
-app.get('/', function (req, res,main) {
-  
 
+
+app.get('/', function (req, res) {
+  
+      main()
    res.status(200).send(sheetValues)
 
  })
