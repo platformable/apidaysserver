@@ -6,13 +6,17 @@ app.listen(process.env.PORT || 5000)
 const { google } = require("googleapis");
 const sheets = google.sheets("v4");
 
+
 const sheetValues = {
+  date:"",
   values:[],
   categories:[]
 };
 
-
 async function main() {
+
+  sheetValues.date=new Date
+  
   const authClient = await authorize();
   const request = await {
     spreadsheetId: process.env.NEXT_PUBLIC_SHEET_ID,
@@ -46,9 +50,6 @@ async function main() {
         item.founderNames=company[14] || null
         item.headquartersCountry=company[15] || null
         item.headquartersCity=company[16] || null
-
-        /* item.diversitySpotlight=company[15] || null */
-
         item.womanInManagement=company[17] || null
         item.nonWhitePeopleInManagement=company[18] || null
         item.headcount=company[19] || null
@@ -58,11 +59,6 @@ async function main() {
         item.industryGroups=company[23] || null
         item.numbersOfCustomers=company[24] || null
         item.customers=company[25] || null
-     /*    item.namesOfActualCustomersAsPerWebsite=company[23] || null
-        item.urlOfContentAdressingFinancialServices=company[24] || null
-        item.urlOfContentAdressingHealthSector=company[25] || null
-        item.urlOfContentAdressingGovernment=company[26] || null
-        item.urlOfContentAdressingSustainability=company[27] || null */
         item.totalNumberOfNewProducFeaturesInLastYear=company[26] || null
         item.totalProductsActive=company[27] || null
         item.patentsGranted=company[28] || null
@@ -73,7 +69,6 @@ async function main() {
         item.privacyBreaches=company[33] || null
         item.knownPartnershipsApi=company[34] || null
         item.knownPartnershipsNonApi=company[35] || null
-   /*      item.avergaeNumberOfBlogsPerQuarter=company[36] || null */
         item.monthlyWebsiteVisits=company[36] || null
         item.monthlyWebsiteVisitsGrowth=company[37] || null
         item.participationInApidays=company[38] || null
@@ -91,16 +86,29 @@ async function main() {
         item.ipoDate=company[50] || null
         item.moneyRaisedAtIpo=company[51] || null
         item.valuationAtIpo=company[52] || null
-    
+        item.logoApiIndustry=company[53] || null
+        item.pricingModel=company[54] || null
+        item.pricingPage=company[55] || null
+        item.blogQ12021=company[56] || 0
+        item.blogQ22021=company[57] || 0
+        item.blogQ32021=company[58] || 0
+        item.blogQ42021=company[59] || 0
+        item.apidays2018=company[60] || null
+        item.apidays2019=company[61] || null
+        item.apidays2020=company[62] || null
+        item.apidays2021=company[63] || null
 
       sheetValues.values.push(item);
+    
     })
   } catch (err) {
     console.error(err);
   }
+
 }
 
-main();
+main()
+
 
 async function authorize() {
   let authClient = await process.env.NEXT_PUBLIC_GOOGLE_KEY;
@@ -110,9 +118,15 @@ async function authorize() {
   return authClient;
 }
 
+var reFetch = function(req, res, next) {
+  main()
+  next(); 
+}
+
+app.use(reFetch)
 
 app.get('/', function (req, res) {
 
-   res.status(200).send(sheetValues)
+  res.send(sheetValues)
 
  })
