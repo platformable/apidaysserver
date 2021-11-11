@@ -6,21 +6,20 @@ app.listen(process.env.PORT || 5000)
 const { google } = require("googleapis");
 const sheets = google.sheets("v4");
 
-
 const sheetValues = {
   date:"",
   values:[],
   categories:[]
 };
 
-async function main() {
 
-  sheetValues.date=new Date
+async function main() {
   
+  sheetValues.date=new Date;
   const authClient = await authorize();
   const request = await {
     spreadsheetId: process.env.NEXT_PUBLIC_SHEET_ID,
-    range: "Sheet1!A2:BA",
+    range: "Sheet1!A2:BL",
     valueRenderOption: "FORMATTED_VALUE",
     dateTimeRenderOption: "FORMATTED_STRING",
     auth: authClient,
@@ -89,17 +88,18 @@ async function main() {
         item.logoApiIndustry=company[53] || null
         item.pricingModel=company[54] || null
         item.pricingPage=company[55] || null
-        item.blogQ12021=company[56] || 0
-        item.blogQ22021=company[57] || 0
-        item.blogQ32021=company[58] || 0
-        item.blogQ42021=company[59] || 0
+        item.blogQ12021=company[56] || null
+        item.blogQ22021=company[57] || null
+        item.blogQ32021=company[58] || null
+        item.blogQ42021=company[59] || null
         item.apidays2018=company[60] || null
         item.apidays2019=company[61] || null
         item.apidays2020=company[62] || null
         item.apidays2021=company[63] || null
+    
 
       sheetValues.values.push(item);
-    
+
     })
   } catch (err) {
     console.error(err);
@@ -107,8 +107,8 @@ async function main() {
 
 }
 
-main()
 
+main()
 
 async function authorize() {
   let authClient = await process.env.NEXT_PUBLIC_GOOGLE_KEY;
@@ -118,15 +118,10 @@ async function authorize() {
   return authClient;
 }
 
-var reFetch = function(req, res, next) {
-  main()
-  next(); 
-}
 
-app.use(reFetch)
+app.get('/', function (req, res,main) {
+  
 
-app.get('/', function (req, res) {
-
-  res.send(sheetValues)
+   res.status(200).send(sheetValues)
 
  })
