@@ -6,7 +6,6 @@ app.listen(process.env.PORT || 5000)
 const { google } = require("googleapis");
 const sheets = google.sheets("v4");
 
-
 const sheetValues = {
   date:"",
   values:[],
@@ -15,7 +14,7 @@ const sheetValues = {
 
 async function main() {
 
-
+console.log("play", new Date)
   
   sheetValues.date=new Date;
   const authClient = await authorize();
@@ -29,7 +28,9 @@ async function main() {
 
   try {
     const response = (await sheets.spreadsheets.values.get(request)).data;
-
+    
+    sheetValues.categories=[]
+    sheetValues.values=[]
     const allData =  response.values;
    allData.forEach((company, index) => {
       const item = {};
@@ -98,7 +99,7 @@ async function main() {
         item.apidays2019=company[61] || null
         item.apidays2020=company[62] || null
         item.apidays2021=company[63] || null
-    
+
 
       sheetValues.values.push(item);
 
@@ -106,7 +107,6 @@ async function main() {
   } catch (err) {
     console.error(err);
   }
- return sheetValues
 }
 
 main()
@@ -124,7 +124,9 @@ async function authorize() {
 
 
 app.get('/', function (req, res) {
-  
+
+  main()
+
 
    res.status(200).send(sheetValues)
 
