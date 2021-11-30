@@ -12,6 +12,12 @@ const sheetValues = {
   categories: [],
 };
 
+const companyValues = {
+  date: "",
+  values: [],
+  categories: [],
+};
+
 async function main() {
   sheetValues.date = new Date();
   const authClient = await authorize();
@@ -28,6 +34,52 @@ async function main() {
 
     sheetValues.categories = [];
     sheetValues.values = [];
+    const allData = response.values;
+    allData.forEach((company, index) => {
+      const item = {};
+      item.id = index;
+      item.name = company[0];
+      item.parentCategorySlug = company[4] || null;
+      item.logo = company[5];
+      item.subcategory = company[3] || null;
+      item.description = company[6] || null;
+      item.yearFounded = company[12] || null;
+      item.headquartersCountry = company[15] || null;
+      item.headquartersCity = company[16] || null;
+      item.womanInManagement = company[17] || null;
+      item.nonWhitePeopleInManagement = company[18] || null;
+      item.headcount = company[19] || null;
+      item.numbersOfCustomers = company[24] || null;
+      item.customers = company[25] || null;
+      item.totalFunding = company[42] || null;
+      sheetValues.values.push(item);
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+
+
+main();
+
+
+async function getCompanies() {
+  sheetValues.date = new Date();
+  const authClient = await authorize();
+  const request = await {
+    spreadsheetId: process.env.NEXT_PUBLIC_SHEET_ID,
+    range: "Sheet1!A2:BM",
+    valueRenderOption: "FORMATTED_VALUE",
+    dateTimeRenderOption: "FORMATTED_STRING",
+    auth: authClient,
+  };
+
+  try {
+    const response = (await sheets.spreadsheets.values.get(request)).data;
+
+    companyValues.categories = [];
+    companyValues.values = [];
     const allData = response.values;
     allData.forEach((company, index) => {
       const item = {};
@@ -97,17 +149,14 @@ async function main() {
       item.apidays2020 = company[62] || null;
       item.apidays2021 = company[63] || null;
       item.openSource = company[64] || null;
-      sheetValues.values.push(item);
+      companyValues.values.push(item);
     });
   } catch (err) {
     console.error(err);
   }
 }
 
-
-
-main();
-
+getCompanies()
 
 async function authorize() {
   let authClient = await process.env.NEXT_PUBLIC_GOOGLE_KEY;
@@ -121,5 +170,11 @@ app.get("/", function (req, res) {
   main();
 
   res.status(200).send(sheetValues);
+});
+
+app.get("/companies", function (req, res) {
+  getCompanies();
+
+  res.status(200).send(companyValues);
 });
 
