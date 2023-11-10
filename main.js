@@ -62,7 +62,7 @@ async function main(sheet_id) {
   }
 }
 
-main();
+main(process.env.NEXT_PUBLIC_SHEET_ID);
 
 async function getCompanies(sheet_id) {
   sheetValues.date = new Date();
@@ -156,7 +156,7 @@ async function getCompanies(sheet_id) {
   }
 }
 
-getCompanies()
+getCompanies(process.env.NEXT_PUBLIC_SHEET_ID)
 
 async function authorize() {
   let authClient = await process.env.NEXT_PUBLIC_GOOGLE_KEY;
