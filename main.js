@@ -1,10 +1,13 @@
 const express = require("express");
 const app = express();
 require("dotenv").config();
-app.listen(process.env.PORT || 5000);
+app.listen(process.env.PORT || 5500);
+const { generateAccessToken,validateJwt } =require("./middlewares/auth");
 
 const { google } = require("googleapis");
 const sheets = google.sheets("v4");
+
+const companiesData = require('./utils/v2/companiesFunctions')
 
 const sheetValues = {
   date: "",
@@ -18,11 +21,11 @@ const companyValues = {
   categories: [],
 };
 
-async function main() {
+async function main(sheet_id) {
   sheetValues.date = new Date();
   const authClient = await authorize();
   const request = await {
-    spreadsheetId: process.env.NEXT_PUBLIC_SHEET_ID,
+    spreadsheetId: sheet_id,
     range: "Sheet1!A2:BM",
     valueRenderOption: "FORMATTED_VALUE",
     dateTimeRenderOption: "FORMATTED_STRING",
@@ -31,7 +34,7 @@ async function main() {
 
   try {
     const response = (await sheets.spreadsheets.values.get(request)).data;
-
+    
     sheetValues.categories = [];
     sheetValues.values = [];
     const allData = response.values;
@@ -59,16 +62,13 @@ async function main() {
   }
 }
 
+//main();
 
-
-main();
-
-
-async function getCompanies() {
+async function getCompanies(sheet_id) {
   sheetValues.date = new Date();
   const authClient = await authorize();
   const request = await {
-    spreadsheetId: process.env.NEXT_PUBLIC_SHEET_ID,
+    spreadsheetId: sheet_id,
     range: "Sheet1!A2:BM",
     valueRenderOption: "FORMATTED_VALUE",
     dateTimeRenderOption: "FORMATTED_STRING",
@@ -156,7 +156,7 @@ async function getCompanies() {
   }
 }
 
-getCompanies()
+//getCompanies()
 
 async function authorize() {
   let authClient = await process.env.NEXT_PUBLIC_GOOGLE_KEY;
@@ -166,15 +166,85 @@ async function authorize() {
   return authClient;
 }
 
-app.get("/", function (req, res) {
-  main();
-
-  res.status(200).send(sheetValues);
+app.get("/", async function (req, res) {
+  try {
+    await main(process.env.NEXT_PUBLIC_SHEET_ID);
+    res.status(200).send(sheetValues);
+  } catch (error) {
+    console.log("error", error);
+    res.send({ errorMessage: "An error ocurred, please try again" });
+  }
 });
 
-app.get("/companies", function (req, res) {
-  getCompanies();
-
-  res.status(200).send(companyValues);
+app.get("/companies", async function (req, res) {
+  try {
+    await getCompanies(process.NEXT_PUBLIC_SHEET_ID);
+    res.status(200).send(companyValues);
+  } catch (error) {
+    console.log("error", error);
+    res.send({
+      errorMessage:
+        "An error ocurred while fetching companies, please try again",
+    });
+  }
 });
 
+
+
+
+app.get("/v2/companies",validateJwt, async (req,res)=>{
+  try {
+    const data = await companiesData.getCompanies(process.env.NEXT_PUBLIC_SHEET_ID_2023)
+    res.send(data)
+   } catch (error) {
+    console.log("error",error)
+    res.send({errorMessage:'An error ocurred, company'})
+   }
+})
+
+
+
+
+
+app.get("/v2/companies/:company", validateJwt, async (req,res)=>{
+  const company = req.params.company
+ try {
+  const data = await companiesData.getCompany(process.env.NEXT_PUBLIC_SHEET_ID_2023,company.toLocaleLowerCase())
+  res.send(data)
+ } catch (error) {
+  console.log("error",error)
+  res.send({errorMessage:'An error ocurred, company'})
+
+ }
+})
+
+
+
+
+/* V2 */
+
+/* 
+
+app.get("/v2/allCompanies", async function (req, res) {
+  try {
+   const data= await companiesData.main_v2(process.env.NEXT_PUBLIC_SHEET_ID_2023);
+    res.status(200).send(data);
+  } catch (error) {
+    console.log("error", error);
+    res.send({ errorMessage: "An error ocurred, please try again" });
+  }
+});
+
+app.get("/v2/companies", async function (req, res) {
+  try {
+   const data = await companiesData.getCompanies(process.env.NEXT_PUBLIC_SHEET_ID_2023);
+    res.status(200).send(data);
+  } catch (error) {
+    console.log("error", error);
+    res.send({
+      errorMessage:
+        "An error ocurred while fetching companies, please try again",
+    });
+  }
+});
+ */
