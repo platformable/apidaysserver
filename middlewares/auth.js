@@ -17,8 +17,7 @@ const generateAccessToken = async (user) => {
 const validateJwt = async (req, res, next) => {
   // Get the JWT token from the Authorization header.
   const token = req.headers?.authorization?.split(" ")[1];
-console.log('req.headers',req.headers)
-console.log("token",token)
+
 
 /*   if (req.headers["content-type"] !== "application/json") {
     res.status(400).send("Invalid content type. Please send JSON data.");

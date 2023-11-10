@@ -194,7 +194,7 @@ app.get("/companies", async function (req, res) {
 
 app.get("/v2/companies",validateJwt, async (req,res)=>{
   try {
-    const data = await companiesData.getCompanies(process.env.NEXT_PUBLIC_SHEET_ID_2023)
+    const data = await companiesData.main_v2(process.env.NEXT_PUBLIC_SHEET_ID_2023)
     res.send(data)
    } catch (error) {
     console.log("error",error)
