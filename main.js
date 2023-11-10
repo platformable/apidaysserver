@@ -222,29 +222,3 @@ app.get("/v2/companies/:company", validateJwt, async (req,res)=>{
 
 
 /* V2 */
-
-/* 
-
-app.get("/v2/allCompanies", async function (req, res) {
-  try {
-   const data= await companiesData.main_v2(process.env.NEXT_PUBLIC_SHEET_ID_2023);
-    res.status(200).send(data);
-  } catch (error) {
-    console.log("error", error);
-    res.send({ errorMessage: "An error ocurred, please try again" });
-  }
-});
-
-app.get("/v2/companies", async function (req, res) {
-  try {
-   const data = await companiesData.getCompanies(process.env.NEXT_PUBLIC_SHEET_ID_2023);
-    res.status(200).send(data);
-  } catch (error) {
-    console.log("error", error);
-    res.send({
-      errorMessage:
-        "An error ocurred while fetching companies, please try again",
-    });
-  }
-});
- */
