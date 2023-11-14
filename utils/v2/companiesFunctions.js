@@ -176,7 +176,7 @@ async function main_v2() {
       const allData = response.values;
       
       const company = allData.filter((company,index)=>{ return company[0].toLowerCase() === companyName.toLowerCase()})[0]
-      console.log("Company",company)
+      
       if(company===undefined){
         companyValues.message="No company found with that name, try again"
       } else {
@@ -189,6 +189,7 @@ async function main_v2() {
         companyValues.subcategory = company[2] || null;
         companyValues.description = company[6] || null;
         companyValues.yearFounded = company[12] || null;
+        companyValues.founderNames=company[14] || null;
         companyValues.headquartersCountry = company[15] || null;
         companyValues.headquartersCity = company[16] || null;
         companyValues.github=company[9] || null
