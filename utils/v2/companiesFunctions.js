@@ -54,6 +54,7 @@ async function main_v2() {
         item.womanInManagement = company[17] || null;
         item.nonWhitePeopleInManagement = company[18] || null;
         item.headcount = company[19] || null;
+        item.totalProducts = company[20] || null;
         item.totalFunding = company[34] || null;
         item.logo = company[5];
         sheetValues.values.push(item);
