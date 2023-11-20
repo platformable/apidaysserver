@@ -8,6 +8,7 @@ const { google } = require("googleapis");
 const sheets = google.sheets("v4");
 
 const companiesData = require('./utils/v2/companiesFunctions')
+const clusterData = require('./utils/v2/clustersCategoriesSubcategories')
 
 const sheetValues = {
   date: "",
@@ -216,6 +217,16 @@ app.get("/v2/companies/:company", validateJwt, async (req,res)=>{
   res.send({errorMessage:'An error ocurred, company'})
 
  }
+})
+
+app.get("/v2/clusters/", validateJwt, async (req,res)=>{
+  try {
+    const data = await clusterData.getClustersData(process.env.NEXT_PUBLIC_SHEET_ID_2023)
+    res.send(data)
+   } catch (error) {
+    console.log("error",error)
+    res.send({errorMessage:'An error ocurred, company'})
+   }
 })
 
 
