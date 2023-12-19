@@ -7,6 +7,14 @@ const { generateAccessToken,validateJwt } =require("./middlewares/auth");
 const { google } = require("googleapis");
 const sheets = google.sheets("v4");
 
+const newrelic = require('newrelic');
+
+newrelic.instrumentLoadedModule(
+  'express',    // the module's name, as a string
+  express // the module instance
+);
+
+
 const companiesData = require('./utils/v2/companiesFunctions')
 const clusterData = require('./utils/v2/clustersCategoriesSubcategories')
 
