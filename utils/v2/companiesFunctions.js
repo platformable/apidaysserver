@@ -28,7 +28,7 @@ async function main_v2() {
     const authClient = await authorize();
     const request = await {
       spreadsheetId: process.env.NEXT_PUBLIC_SHEET_ID_2023,
-      range: "Sheet1!A2:BM",
+      range: "Sheet1!A2:AX",
       valueRenderOption: "FORMATTED_VALUE",
       dateTimeRenderOption: "FORMATTED_STRING",
       auth: authClient,
@@ -56,7 +56,7 @@ async function main_v2() {
         item.headcount = company[19] || null;
         item.totalProducts = company[20] || null;
         item.totalFunding = company[34] || null;
-        item.logo = company[5];
+        item.logo = company[49];
         sheetValues.values.push(item);
       });
       return sheetValues
@@ -75,7 +75,7 @@ async function main_v2() {
     const authClient = await authorize();
     const request = await {
       spreadsheetId: sheet_id,
-      range: "Sheet1!A2:BM",
+      range: "Sheet1!A2:AX",
       valueRenderOption: "FORMATTED_VALUE",
       dateTimeRenderOption: "FORMATTED_STRING",
       auth: authClient,
@@ -95,7 +95,7 @@ async function main_v2() {
         item.url = company[2] || null;
         item.subcategory = company[3] || null;
         item.parentCategorySlug = company[4] || null;
-        item.logo = company[5];
+        item.logo = company[49];
         item.description = company[6] || null;
         item.crunchbase = company[7] || null;
         item.linkedin = company[8] || null;
@@ -163,7 +163,7 @@ async function main_v2() {
     const authClient = await authorize();
     const request = await {
       spreadsheetId: sheet_id,
-      range: "Sheet1!A2:BM",
+      range: "Sheet1!A2:AX",
       valueRenderOption: "FORMATTED_VALUE",
       dateTimeRenderOption: "FORMATTED_STRING",
       auth: authClient,
@@ -217,7 +217,7 @@ async function main_v2() {
         companyValues.privacySpecific = company[23] || null;
         companyValues.knownPartnership = company[30] || null;
         companyValues.knownPartnershipNonAPI = company[31] || null;
-        companyValues.logo = company[5];
+        companyValues.logo = company[49];
       }
       
         
