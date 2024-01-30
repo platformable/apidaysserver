@@ -216,6 +216,7 @@ async function main_v2() {
         companyValues.knownStandardsUsed = company[22] || null;
         companyValues.privacySpecific = company[23] || null;
         companyValues.knownPartnership = company[30] || null;
+        companyValues.ipoDate = company[38] || null;
         companyValues.knownPartnershipNonAPI = company[31] || null;
         companyValues.logo = company[49];
       }
