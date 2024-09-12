@@ -163,7 +163,7 @@ async function main_v2() {
     const authClient = await authorize();
     const request = await {
       spreadsheetId: sheet_id,
-      range: "Sheet1!A2:AX",
+      range: "Sheet1!A2:AZ",
       valueRenderOption: "FORMATTED_VALUE",
       dateTimeRenderOption: "FORMATTED_STRING",
       auth: authClient,
@@ -219,8 +219,11 @@ async function main_v2() {
         companyValues.ipoDate = company[38] || null;
         companyValues.knownPartnershipNonAPI = company[32] || null;
         companyValues.logo = company[49];
+        companyValues.knownProtocolsUsed = company[50] || null;
+        companyValues.hasAIFeatures = company[51] || null;
+
       }
-      
+      console.log(companyValues)
         
       return companyValues
     } catch (err) {
