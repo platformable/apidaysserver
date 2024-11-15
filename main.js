@@ -2,10 +2,10 @@ require("dotenv").config();
 
 const express = require("express");
 const app = express();
-const port = 5500
 
-app.listen(port,  () => {
-  console.log(`app listening on port ${port}`)
+
+app.listen(process.env.PORT || 5500,  () => {
+  console.log(`app listening`)
 });
 const { generateAccessToken,validateJwt } =require("./middlewares/auth");
 
