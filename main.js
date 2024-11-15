@@ -1,7 +1,12 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
-require("dotenv").config();
-app.listen(process.env.PORT || 5500);
+const port = 5500
+
+app.listen(port,  () => {
+  console.log(`app listening on port ${port}`)
+});
 const { generateAccessToken,validateJwt } =require("./middlewares/auth");
 
 const { google } = require("googleapis");
@@ -237,7 +242,30 @@ app.get("/v2/clusters/", validateJwt, async (req,res)=>{
    }
 })
 
+app.get('/v3/companies',validateJwt, async (req,res)=>{
+  console.log("/v3/companies");
+  try {
+    const data = await companiesData.main_v3()
+    res.send(data)
+ 
+  } catch (e) {
+    res
+      .send({ message: "an error occurred", statusText: "Fail" })
+      .status(500);
+  }
+})
 
+app.get("/v3/companies/:company", validateJwt, async (req,res)=>{
+  const company = req.params.company
+ try {
+  const data = await companiesData.getCompanyV3(company)
+  res.send(data)
+ } catch (error) {
+  console.log("error",error)
+  res.send({errorMessage:'An error ocurred, company'})
+
+ }
+})
 
 
 /* V2 */

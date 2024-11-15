@@ -1,4 +1,5 @@
 require("dotenv").config();
+const db = require("../../dbConnect");
 const { google } = require("googleapis");
 const sheets = google.sheets("v4");
 
@@ -64,6 +65,50 @@ async function main_v2() {
       console.error(err);
     }
   }
+
+
+  async function main_v3() {
+
+    sheetValues.date = new Date();
+
+  
+    try {
+      const allCompaniesData = await db.query(`select entityname,cluster,broadcategory,
+subcategory, description,yearfounded,
+headquarterscountry,headquarterscity,womeninmanagement,
+diversemanagement,headcount,totalproducts,totalfunding,
+logo_do  from "apilandscape".apiprovidersmain`);
+      const response = allCompaniesData.rows;
+      console.log("response:",response[0])
+      sheetValues.categories = [];
+      sheetValues.values = [];
+      const allData = response;
+      /* Object.entries(allData).forEach(([key, value]) => { */
+      allData.forEach((company, index) => {
+           
+        const item = {};
+        item.id = index;
+        item.name = company?.entityname.trim() || null;
+        item.cluster = company?.cluster || null;
+        item.category= company?.broadcategory || null
+        item.subcategory = company?.subcategory || null;
+        item.description = company?.description || null;
+        item.yearFounded = company?.yearfounded || null;
+        item.headquartersCountry = company?.headquarterscountry || null;
+        item.headquartersCity = company?.headquarterscity || null;
+        item.womanInManagement = company?.womeninmanagement || null;
+        item.nonWhitePeopleInManagement = company?.diversemanagement || null;
+        item.headcount = company?.headcount || null;
+        item.totalProducts = company?.totalproducts || null;
+        item.totalFunding = company?.totalfunding || null;
+        item.logo = company?.logo_do;
+        sheetValues.values.push(item); 
+      });
+      return sheetValues
+    } catch (err) {
+      console.error(err);
+    }
+  }  
 
 
 
@@ -231,8 +276,84 @@ async function main_v2() {
     }
   }
 
+
+  async function getCompanyV3(companyName) {
+    sheetValues.date = new Date();
+  /*   const authClient = await authorize();
+    const request = await {
+      spreadsheetId: sheet_id,
+      range: "Sheet1!A2:AZ",
+      valueRenderOption: "FORMATTED_VALUE",
+      dateTimeRenderOption: "FORMATTED_STRING",
+      auth: authClient,
+    }; */
+  
+    try {
+      const allCompaniesData = await db.query(`select * from "apilandscape".apiprovidersmain where entityName='${companyName}'`);
+              const response = allCompaniesData.rows;
+              console.log("response:",response[0])
+  
+      let companyValues={}
+      
+      //const allData = response;
+      
+      //const company = allData.filter((company,index)=>{ return company[0].toLowerCase() === companyName.toLowerCase()})[0]
+      
+      if(response.length===0){
+        companyValues.message="No company found with that name, try again"
+      } else {
+
+        companyValues.name = response[0].entityname
+         companyValues.url=response[0].entityhomepage|| null
+         companyValues.cluster = response[0].cluster || null;
+         companyValues.category= response[0].broadcategory || null
+         companyValues.subcategory = response[0].subcategory || null;
+         companyValues.description = response[0].description || null;
+         companyValues.yearFounded = response[0].yearfounded || null;
+         companyValues.founderNames=response[0].foundernames || null;
+         companyValues.headquartersCountry = response[0].headquarterscountry || null;
+        companyValues.headquartersCity = response[0].headquarterscity || null;
+        companyValues.github=response[0].githuburl || null
+        companyValues.linkedin=response[0].linkedinurl || null
+        companyValues.womanInManagement = response[0].womeninmanagement || null;
+        companyValues.nonWhitePeopleInManagement = response[0].diversemanagement || null;
+        companyValues.headcount = response[0].headcount || null;
+        companyValues.stage = response[0].stage || null;
+        companyValues.totalFunding = response[0].totalfunding || null;
+        companyValues.lastFunding = response[0].lastfundingdate || null;
+        companyValues.ipoData = response[0].ipodate || null;
+        companyValues.moneyRaisedAtIpo = response[0].moneyraisedatipo || null;
+        companyValues.ipoValuation = response[0].valuationatipo || null;
+        companyValues.acquisition = response[0].acquisitions || null;
+        companyValues.activeProducts = response[0].totalproducts || null;
+        companyValues.patentsGranted = response[0].patentsgranted || null;
+        companyValues.pricingModel = response[0].pricingmodel || null;
+        companyValues.pricingPage = response[0].pricingpage || null;
+        companyValues.contentAddressingBanking = response[0].pageaboutbankingfinance || null;
+        companyValues.contentAddressingHealth = response[0].pageabouthealth || null;
+        companyValues.contentAddressingSustainability = response[0].pageaboutsustainability || null;
+        companyValues.contentAddressingGovernment = response[0].pageaboutgovernment || null;
+        companyValues.knownStandardsUsed = response[0].knownstandardsused || null;
+        companyValues.privacySpecific = response[0].privacyfeatureshighlighted || null;
+        companyValues.knownPartnership = response[0].knownpartnershipsapi || null;
+        companyValues.ipoDate = response[0].ipodate || null;
+        companyValues.knownPartnershipNonAPI = response[0].knownpartnershipsnonapi || null;
+        companyValues.logo = response[0].logo_do;
+        companyValues.knownProtocolsUsed = response[0].protocols || null;
+        companyValues.hasAIFeatures = response[0].hasaifeatures || null;
+
+      }
+      console.log(companyValues)
+        
+      return companyValues
+    } catch (err) {
+      console.error(err);
+    }
+  }
   module.exports = {
     main_v2,
+    main_v3,
     getCompanies,
-    getCompany
+    getCompany,
+    getCompanyV3
   }
