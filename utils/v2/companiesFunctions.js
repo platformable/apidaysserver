@@ -341,6 +341,7 @@ logo_do  from "apilandscape".apiprovidersmain`);
         companyValues.logo = response[0].logo_do;
         companyValues.knownProtocolsUsed = response[0].protocols || null;
         companyValues.hasAIFeatures = response[0].hasaifeatures || null;
+        companyValues.opensource = response[0].opensource || null;
 
       }
       console.log(companyValues)
