@@ -116,10 +116,10 @@ subcategory, description,yearfounded,
 headquarterscountry,headquarterscity,womeninmanagement,
 diversemanagement,headcount,totalproducts,totalfunding,
 logo_do  from "ailandscape".apiprovidersmain 
-where cluster like '%App creation using LLMs%' 
-or cluster like '%LLM creation%'  or cluster like '%Intermediary layer%' 
-or  cluster like '%AI Governance and accountability%' 
-or  cluster  like '%Knowledge transfer ecosystem%'`)
+where cluster like '%App Creation Using LLMs%' 
+or cluster like '%LLM Creation%'  or cluster like '%Intermediary Layer%' 
+or  cluster like '%AI Governance And Accountability%' 
+or  cluster  like '%Knowledge Transfer Ecosystem%'`)
     const response = allCompaniesData.rows
     console.log("response:", response[0])
     companyValues.categories = []
