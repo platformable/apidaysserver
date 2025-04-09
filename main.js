@@ -270,4 +270,13 @@ app.get("/ailandscape/companies", validateJwt, async (req, res) => {
   }
 })
 
-/* V2 */
+app.get("/ailandscape/companies/:company", validateJwt, async (req, res) => {
+  const company = req.params.company
+  try {
+    const data = await companiesData.getCompany_ai_1(company)
+    res.send(data)
+  } catch (error) {
+    console.log("error", error)
+    res.send({ errorMessage: "An error ocurred, company" })
+  }
+})
