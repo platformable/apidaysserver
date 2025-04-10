@@ -393,14 +393,6 @@ async function getCompanyV3(companyName) {
 
 async function getCompany_ai_1(companyName) {
   sheetValues.date = new Date()
-  /*   const authClient = await authorize();
-    const request = await {
-      spreadsheetId: sheet_id,
-      range: "Sheet1!A2:AZ",
-      valueRenderOption: "FORMATTED_VALUE",
-      dateTimeRenderOption: "FORMATTED_STRING",
-      auth: authClient,
-    }; */
 
   try {
     const allCompaniesData = await db.query(
