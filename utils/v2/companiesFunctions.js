@@ -2,7 +2,7 @@ require("dotenv").config()
 const db = require("../../dbConnect")
 const { google } = require("googleapis")
 const sheets = google.sheets("v4")
-
+const dbDataset = require("../../dbConnectDataset")
 const sheetValues = {
   date: "",
   values: [],
@@ -146,6 +146,83 @@ or  cluster  like '%Knowledge Transfer Ecosystem%'`)
       companyValues.values.push(item)
     })
     return companyValues
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function main_ai_v2() {
+  companyValues.date = new Date()
+
+  try {
+    const allCompaniesData = await dbDataset.query(`SELECT
+    entities."EntityName" AS name,
+    entities."EntityURL" AS url,
+    STRING_AGG(DISTINCT taxonomy."Activity"::TEXT, ', ') AS "subcategory",
+    STRING_AGG(DISTINCT category."Category"::TEXT, ', ') AS "category",
+    STRING_AGG(DISTINCT clusters."Cluster"::TEXT, ', ') AS "cluster",
+    entities."YearFounded" as yearfounded,
+    entities."EntityDescription" as entitydescription,
+    entities."HQLocation" as hqlocation,
+    country."ISOCountryCode" as isocountrycode, 
+    entities."Headcount" AS headcount,
+    entities."Total_Products" AS totalproducts,
+    entities."Total Funding" AS totalfunding,
+    CASE 
+        WHEN entities."EntityLogo" IS NULL THEN NULL
+        WHEN entities."EntityLogo"::TEXT = '' THEN NULL
+        WHEN entities."EntityLogo"::TEXT !~ '^\\s*[\\[\\{]' THEN entities."EntityLogo"::TEXT
+        ELSE (
+            CASE 
+                WHEN entities."EntityLogo"::TEXT ~ '^\\s*\\[' THEN
+                    COALESCE((entities."EntityLogo"::JSONB -> 0 ->> 'url'), NULL)
+                ELSE 
+                    COALESCE((entities."EntityLogo"::JSONB ->> 'url'), NULL)
+            END
+        )
+    END AS logo,
+    STRING_AGG(DISTINCT entities_policies."PolicyName"::TEXT, ', ') AS "policies",
+    CASE 
+        WHEN STRING_AGG(entities_policies."PolicyName"::TEXT, ', ') LIKE '%Diverse Management%' 
+        THEN TRUE
+        ELSE FALSE
+    END AS "diversemanagement",
+    CASE 
+        WHEN STRING_AGG(entities_policies."PolicyName"::TEXT, ', ') LIKE '%Women in Management%' 
+        THEN TRUE
+        ELSE FALSE
+    END AS "womeninmanagement"
+FROM
+    schemacoredataset."Entities" entities
+JOIN
+    schemacoredataset."nc_18z6___nc_m2m_8s3nsqy17h" entities_taxonomy_connector ON entities."IdEntity" = entities_taxonomy_connector.table1_id
+LEFT JOIN schemacoredataset."nc_18z6___nc_m2m_msbiwg2n44" entities_policy_connector ON entities."IdEntity" = entities_policy_connector."table1_id"
+LEFT JOIN schemacoredataset."EntityPolicies" entities_policies ON entities_policy_connector."table2_id" = entities_policies."id"
+LEFT JOIN schemacoredataset."Country" country ON entities."IdContry" = country."IdCountry" 
+JOIN
+    schemacoredataset."Taxonomy" taxonomy ON taxonomy."IdTaxonomy" = entities_taxonomy_connector.table2_id
+JOIN
+    schemacoredataset."Category" category ON taxonomy."Category" = category."IdCategory"
+JOIN 
+    schemacoredataset."Clusters" clusters ON clusters.id = category."Clusters_id"    
+WHERE
+    entities."TypeEntity" = 'TT22' AND entities."DateClosure" IS null and clusters."Cluster" ILIKE ANY (ARRAY[
+        '%App Creation Using LLMs%',
+        '%LLM Creation%',
+        '%Intermediary Layer%',
+        '%AI Governance & Accountability%',
+        '%Knowledge Transfer Ecosystem%'
+    ])
+GROUP BY
+    entities."IdEntity", entities."EntityName", entities."EntityURL", 
+    entities."YearFounded", entities."EntityDescription", entities."HQLocation", 
+    entities."Headcount", entities."Total_Products", entities."Total Funding", 
+    entities."EntityLogo", country."ISOCountryCode" 
+ORDER BY
+    entities."IdEntity";`)
+    const response = allCompaniesData.rows
+
+    return { values: response, message: "Success" }
   } catch (err) {
     console.error(err)
   }
@@ -308,84 +385,107 @@ async function getCompany(sheet_id, companyName) {
   }
 }
 
-async function getCompanyV3(companyName) {
-  sheetValues.date = new Date()
-  /*   const authClient = await authorize();
-    const request = await {
-      spreadsheetId: sheet_id,
-      range: "Sheet1!A2:AZ",
-      valueRenderOption: "FORMATTED_VALUE",
-      dateTimeRenderOption: "FORMATTED_STRING",
-      auth: authClient,
-    }; */
-
+async function getCompanyV4(companyName) {
   try {
-    const allCompaniesData = await db.query(
-      `select * from "apilandscape".apiprovidersmain where entityName='${companyName}'`
+    const allCompaniesData = await dbDataset.query(
+      `SELECT
+   MAX(entities."EntityName") AS name, 
+    MAX(entities."EntityURL") AS url,
+    STRING_AGG(DISTINCT taxonomy."Activity"::TEXT, ', ') AS "subcategory",
+    STRING_AGG(DISTINCT category."Category"::TEXT, ', ') AS "category",
+    STRING_AGG(DISTINCT clusters."Cluster"::TEXT, ', ') AS "cluster",
+    STRING_AGG(DISTINCT apiprotocols."Protocol Name"::TEXT, ', ') AS "knownprotocolsused",
+    entities."YearFounded" AS yearFounded,
+    entities."EntityDescription" AS description,
+    entities."HQLocation" AS headquartersCity,
+    country."ISOCountryCode" AS isocountrycode, 
+    entities."Headcount" AS headcount,
+    entities."Total_Products" AS totalproducts,
+    entities."Total Funding" AS totalfunding,
+    CASE 
+        WHEN entities."EntityLogo" IS NULL THEN NULL
+        WHEN entities."EntityLogo"::TEXT = '' THEN NULL
+        WHEN entities."EntityLogo"::TEXT ~ '^\s*\[.*\]\s*$' THEN entities."EntityLogo"::JSONB -> 0 ->> 'url'
+        ELSE entities."EntityLogo"::JSONB -> 0 ->> 'url'
+    END AS logo,
+    entities."Founder_Names" AS foundernames,
+    entities."LinkedInURL" AS linkedin,
+    entities."GithubURL" AS github,
+    entities."Stage__Seed" AS stage,
+    entities."Last Funding Date" AS lastfunding,
+    entities."IPODate" AS ipodate,
+    entities."Raised IPO USD" AS moneyraisedatipo,
+    entities."Valuation at IPO USD" AS ipovaluation,
+    entities."AcquisitionDate" AS acquisitiondate,
+    entities."Patents_Granted" AS patentsgranted,
+    entities."Pricing model" AS pricingmodel,
+    entities."PricingURL" AS pricingpage,
+    entities."BankingFinanceURL" AS pageaboutbankingfinance,
+    entities."HealthURL" AS pageabouthealth,
+    entities."SustainabilityURL" AS pageaboutsustainability,
+    entities."GovermentURL" AS pageaboutgovernment,
+    entities."OpenSource" AS opensource,
+    entities."AI Feature" AS hasaifeature,
+    entities."Known standards" AS knownstandardused,
+    entities."PrivacySpecifications" AS privacyfeatureshighlighted,
+    entities."Known partnerships (AP)" AS KnownPartnershipsAPI,
+    entities."Non API Partnership" AS KnownPartnershipsNonAPI,
+    country."CountryName",
+    STRING_AGG(DISTINCT related_entity."EntityName"::TEXT, ', ') AS "acquisition",
+    STRING_AGG(DISTINCT entities_policies."PolicyName"::TEXT, ', ') AS "policies",
+    CASE 
+        WHEN STRING_AGG(DISTINCT entities_policies."PolicyName"::TEXT, ', ') LIKE '%Diverse Management%' 
+        THEN TRUE
+        ELSE FALSE
+    END AS "diversemanagement",
+    CASE 
+        WHEN STRING_AGG(DISTINCT entities_policies."PolicyName"::TEXT, ', ') LIKE '%Women in Management%' 
+        THEN TRUE
+        ELSE FALSE
+    END AS "womeninmanagement"
+FROM
+    schemacoredataset."Entities" entities
+JOIN
+    schemacoredataset."nc_18z6___nc_m2m_8s3nsqy17h" entities_taxonomy_connector ON entities."IdEntity" = entities_taxonomy_connector.table1_id
+LEFT JOIN schemacoredataset."nc_18z6___nc_m2m_msbiwg2n44" entities_policy_connector ON entities."IdEntity" = entities_policy_connector."table1_id"
+LEFT JOIN schemacoredataset."EntityPolicies" entities_policies ON entities_policy_connector."table2_id" = entities_policies."id"
+LEFT JOIN schemacoredataset."Country" country ON entities."IdContry" = country."IdCountry" 
+JOIN
+    schemacoredataset."Taxonomy" taxonomy ON taxonomy."IdTaxonomy" = entities_taxonomy_connector.table2_id
+JOIN
+    schemacoredataset."Category" category ON taxonomy."Category" = category."IdCategory"
+JOIN 
+    schemacoredataset."Clusters" clusters ON clusters.id = category."Clusters_id"
+LEFT JOIN schemacoredataset."nc_18z6___nc_m2m_x6f_bb2v88" entities_protocol_connector ON entities."IdEntity" = entities_protocol_connector."table2_id"
+LEFT JOIN schemacoredataset."API Protocols" apiprotocols ON entities_protocol_connector."table1_id" = apiprotocols."id"
+LEFT JOIN schemacoredataset."nc_18z6___nc_m2m_36u_a3m1xo" entity_relationship_connector ON entities."IdEntity" = entity_relationship_connector.table2_id
+LEFT JOIN schemacoredataset."Entities" related_entity ON related_entity."IdEntity" = entity_relationship_connector.table1_id
+WHERE
+    entities."TypeEntity" = 'TT22' AND entities."DateClosure" IS null and entities."EntityName" = $1
+GROUP BY
+    entities."IdEntity", entities."EntityName", entities."EntityURL", 
+    entities."YearFounded", entities."EntityDescription", entities."HQLocation", 
+    entities."Headcount", entities."Total_Products", entities."Total Funding", 
+    entities."EntityLogo", country."ISOCountryCode", country."CountryName",
+    entities."Founder_Names", entities."LinkedInURL", entities."GithubURL", 
+    entities."Stage__Seed", entities."Last Funding Date", entities."IPODate", 
+    entities."Raised IPO USD", entities."Valuation at IPO USD", entities."AcquisitionDate", 
+    entities."Patents_Granted", entities."Pricing model", entities."PricingURL", 
+    entities."BankingFinanceURL", entities."HealthURL", entities."SustainabilityURL", 
+    entities."GovermentURL", entities."OpenSource", entities."AI Feature", 
+    entities."Known standards", entities."PrivacySpecifications", entities."Known partnerships (AP)", 
+    entities."Non API Partnership" ,entities."YearFounded"
+ORDER BY
+    entities."IdEntity";`,
+      [companyName]
     )
     const response = allCompaniesData.rows
-    console.log("response:", response[0])
-
-    let companyValues = {}
-
-    //const allData = response;
-
-    //const company = allData.filter((company,index)=>{ return company[0].toLowerCase() === companyName.toLowerCase()})[0]
 
     if (response.length === 0) {
-      companyValues.message = "No company found with that name, try again"
+      response.message = "No company found with that name, try again"
     } else {
-      companyValues.name = response[0].entityname
-      companyValues.url = response[0].entityhomepage || null
-      companyValues.cluster = response[0].cluster || null
-      companyValues.category = response[0].broadcategory || null
-      companyValues.subcategory = response[0].subcategory || null
-      companyValues.description = response[0].description || null
-      companyValues.yearFounded = response[0].yearfounded || null
-      companyValues.founderNames = response[0].foundernames || null
-      companyValues.headquartersCountry =
-        response[0].headquarterscountry || null
-      companyValues.headquartersCity = response[0].headquarterscity || null
-      companyValues.github = response[0].githuburl || null
-      companyValues.linkedin = response[0].linkedinurl || null
-      companyValues.womanInManagement = response[0].womeninmanagement || null
-      companyValues.nonWhitePeopleInManagement =
-        response[0].diversemanagement || null
-      companyValues.headcount = response[0].headcount || null
-      companyValues.stage = response[0].stage || null
-      companyValues.totalFunding = response[0].totalfunding || null
-      companyValues.lastFunding = response[0].lastfundingdate || null
-      companyValues.ipoData = response[0].ipodate || null
-      companyValues.moneyRaisedAtIpo = response[0].moneyraisedatipo || null
-      companyValues.ipoValuation = response[0].valuationatipo || null
-      companyValues.acquisition = response[0].acquisitions || null
-      companyValues.activeProducts = response[0].totalproducts || null
-      companyValues.patentsGranted = response[0].patentsgranted || null
-      companyValues.pricingModel = response[0].pricingmodel || null
-      companyValues.pricingPage = response[0].pricingpage || null
-      companyValues.contentAddressingBanking =
-        response[0].pageaboutbankingfinance || null
-      companyValues.contentAddressingHealth =
-        response[0].pageabouthealth || null
-      companyValues.contentAddressingSustainability =
-        response[0].pageaboutsustainability || null
-      companyValues.contentAddressingGovernment =
-        response[0].pageaboutgovernment || null
-      companyValues.knownStandardsUsed = response[0].knownstandardsused || null
-      companyValues.privacySpecific =
-        response[0].privacyfeatureshighlighted || null
-      companyValues.knownPartnership = response[0].knownpartnershipsapi || null
-      companyValues.ipoDate = response[0].ipodate || null
-      companyValues.knownPartnershipNonAPI =
-        response[0].knownpartnershipsnonapi || null
-      companyValues.logo = response[0].logo_do
-      companyValues.knownProtocolsUsed = response[0].protocols || null
-      companyValues.hasAIFeatures = response[0].hasaifeatures || null
-      companyValues.opensource = response[0].opensource || null
+      return response[0]
     }
-    console.log(companyValues)
-
-    return companyValues
   } catch (err) {
     console.error(err)
   }
@@ -466,12 +566,194 @@ async function getCompany_ai_1(companyName) {
   }
 }
 
+async function getCompany_ai_2(companyName) {
+  sheetValues.date = new Date()
+
+  try {
+    const allCompaniesData = await dbDataset.query(
+      `SELECT
+   MAX(entities."EntityName") AS name, 
+    MAX(entities."EntityURL") AS url,
+    STRING_AGG(DISTINCT taxonomy."Activity"::TEXT, ', ') AS "subcategory",
+    STRING_AGG(DISTINCT category."Category"::TEXT, ', ') AS "category",
+    STRING_AGG(DISTINCT clusters."Cluster"::TEXT, ', ') AS "cluster",
+    STRING_AGG(DISTINCT apiprotocols."Protocol Name"::TEXT, ', ') AS "knownprotocolsused",
+    entities."YearFounded" AS yearFounded,
+    entities."EntityDescription" AS description,
+    entities."HQLocation" AS headquartersCity,
+    country."ISOCountryCode" AS isocountrycode, 
+    entities."Headcount" AS headcount,
+    entities."Total_Products" AS totalproducts,
+    entities."Total Funding" AS totalfunding,
+    CASE 
+         WHEN entities."EntityLogo" IS NULL THEN NULL
+        WHEN entities."EntityLogo"::TEXT = '' THEN NULL
+        WHEN entities."EntityLogo"::TEXT ~ '^\s*\[.*\]\s*$' THEN entities."EntityLogo"::JSONB -> 0 ->> 'url'
+        ELSE entities."EntityLogo"::JSONB -> 0 ->> 'url'
+    END AS logo,
+    entities."Founder_Names" AS foundernames,
+    entities."LinkedInURL" AS linkedin,
+    entities."GithubURL" AS github,
+    entities."Stage__Seed" AS stage,
+    entities."Last Funding Date" AS lastfunding,
+    entities."IPODate" AS ipodate,
+    entities."Raised IPO USD" AS moneyraisedatipo,
+    entities."Valuation at IPO USD" AS ipovaluation,
+    entities."AcquisitionDate" AS acquisitiondate,
+    entities."Patents_Granted" AS patentsgranted,
+    entities."Pricing model" AS pricingmodel,
+    entities."PricingURL" AS pricingpage,
+    entities."BankingFinanceURL" AS pageaboutbankingfinance,
+    entities."HealthURL" AS pageabouthealth,
+    entities."SustainabilityURL" AS pageaboutsustainability,
+    entities."GovermentURL" AS pageaboutgovernment,
+    entities."OpenSource" AS opensource,
+    entities."AI Feature" AS hasaifeature,
+    entities."Known standards" AS knownstandardused,
+    entities."PrivacySpecifications" AS privacyfeatureshighlighted,
+    entities."Known partnerships (AP)" AS KnownPartnershipsAPI,
+    entities."Non API Partnership" AS KnownPartnershipsNonAPI,
+    country."CountryName",
+    STRING_AGG(DISTINCT related_entity."EntityName"::TEXT, ', ') AS "acquisition",
+    STRING_AGG(DISTINCT entities_policies."PolicyName"::TEXT, ', ') AS "policies",
+    CASE 
+        WHEN STRING_AGG(DISTINCT entities_policies."PolicyName"::TEXT, ', ') LIKE '%Diverse Management%' 
+        THEN TRUE
+        ELSE FALSE
+    END AS "diversemanagement",
+    CASE 
+        WHEN STRING_AGG(DISTINCT entities_policies."PolicyName"::TEXT, ', ') LIKE '%Women in Management%' 
+        THEN TRUE
+        ELSE FALSE
+    END AS "womeninmanagement"
+FROM
+    schemacoredataset."Entities" entities
+JOIN
+    schemacoredataset."nc_18z6___nc_m2m_8s3nsqy17h" entities_taxonomy_connector ON entities."IdEntity" = entities_taxonomy_connector.table1_id
+LEFT JOIN schemacoredataset."nc_18z6___nc_m2m_msbiwg2n44" entities_policy_connector ON entities."IdEntity" = entities_policy_connector."table1_id"
+LEFT JOIN schemacoredataset."EntityPolicies" entities_policies ON entities_policy_connector."table2_id" = entities_policies."id"
+LEFT JOIN schemacoredataset."Country" country ON entities."IdContry" = country."IdCountry" 
+JOIN
+    schemacoredataset."Taxonomy" taxonomy ON taxonomy."IdTaxonomy" = entities_taxonomy_connector.table2_id
+JOIN
+    schemacoredataset."Category" category ON taxonomy."Category" = category."IdCategory"
+JOIN 
+    schemacoredataset."Clusters" clusters ON clusters.id = category."Clusters_id"
+LEFT JOIN schemacoredataset."nc_18z6___nc_m2m_x6f_bb2v88" entities_protocol_connector ON entities."IdEntity" = entities_protocol_connector."table2_id"
+LEFT JOIN schemacoredataset."API Protocols" apiprotocols ON entities_protocol_connector."table1_id" = apiprotocols."id"
+LEFT JOIN schemacoredataset."nc_18z6___nc_m2m_36u_a3m1xo" entity_relationship_connector ON entities."IdEntity" = entity_relationship_connector.table2_id
+LEFT JOIN schemacoredataset."Entities" related_entity ON related_entity."IdEntity" = entity_relationship_connector.table1_id
+WHERE
+    entities."TypeEntity" = 'TT22' AND entities."DateClosure" IS null and entities."EntityName" = $1
+GROUP BY
+    entities."IdEntity", entities."EntityName", entities."EntityURL", 
+    entities."YearFounded", entities."EntityDescription", entities."HQLocation", 
+    entities."Headcount", entities."Total_Products", entities."Total Funding", 
+    entities."EntityLogo", country."ISOCountryCode", country."CountryName",
+    entities."Founder_Names", entities."LinkedInURL", entities."GithubURL", 
+    entities."Stage__Seed", entities."Last Funding Date", entities."IPODate", 
+    entities."Raised IPO USD", entities."Valuation at IPO USD", entities."AcquisitionDate", 
+    entities."Patents_Granted", entities."Pricing model", entities."PricingURL", 
+    entities."BankingFinanceURL", entities."HealthURL", entities."SustainabilityURL", 
+    entities."GovermentURL", entities."OpenSource", entities."AI Feature", 
+    entities."Known standards", entities."PrivacySpecifications", entities."Known partnerships (AP)", 
+    entities."Non API Partnership" ,entities."YearFounded"
+ORDER BY
+    entities."IdEntity";`,
+      [companyName]
+    )
+    const response = allCompaniesData.rows
+
+    if (response.length === 0) {
+      response.message = "No company found with that name, try again"
+    } else {
+      return response[0]
+    }
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function main_v4() {
+  sheetValues.date = new Date()
+
+  try {
+    const allCompaniesData = await dbDataset.query(`SELECT
+    entities."EntityName" AS name,
+    entities."EntityURL" AS url,
+    STRING_AGG(DISTINCT taxonomy."Activity"::TEXT, ', ') AS "subcategory",
+    STRING_AGG(DISTINCT category."Category"::TEXT, ', ') AS "category",
+    STRING_AGG(DISTINCT clusters."Cluster"::TEXT, ', ') AS "cluster",
+    entities."YearFounded" as yearfounded,
+    entities."EntityDescription" as entitydescription,
+    entities."HQLocation" as hqlocation,
+    country."ISOCountryCode" as isocountrycode, 
+    entities."Headcount" AS headcount,
+    entities."Total_Products" AS totalproducts,
+    entities."Total Funding" AS totalfunding,
+    CASE 
+        WHEN entities."EntityLogo" IS NULL THEN NULL
+        WHEN entities."EntityLogo"::TEXT = '' THEN NULL
+        WHEN entities."EntityLogo"::TEXT !~ '^\\s*[\\[\\{]' THEN entities."EntityLogo"::TEXT
+        ELSE (
+            CASE 
+                WHEN entities."EntityLogo"::TEXT ~ '^\\s*\\[' THEN
+                    COALESCE((entities."EntityLogo"::JSONB -> 0 ->> 'url'), NULL)
+                ELSE 
+                    COALESCE((entities."EntityLogo"::JSONB ->> 'url'), NULL)
+            END
+        )
+    END AS logo,
+    STRING_AGG(DISTINCT entities_policies."PolicyName"::TEXT, ', ') AS "policies",
+    CASE 
+        WHEN STRING_AGG(entities_policies."PolicyName"::TEXT, ', ') LIKE '%Diverse Management%' 
+        THEN TRUE
+        ELSE FALSE
+    END AS "diversemanagement",
+    CASE 
+        WHEN STRING_AGG(entities_policies."PolicyName"::TEXT, ', ') LIKE '%Women in Management%' 
+        THEN TRUE
+        ELSE FALSE
+    END AS "womeninmanagement"
+FROM
+    schemacoredataset."Entities" entities
+JOIN
+    schemacoredataset."nc_18z6___nc_m2m_8s3nsqy17h" entities_taxonomy_connector ON entities."IdEntity" = entities_taxonomy_connector.table1_id
+LEFT JOIN schemacoredataset."nc_18z6___nc_m2m_msbiwg2n44" entities_policy_connector ON entities."IdEntity" = entities_policy_connector."table1_id"
+LEFT JOIN schemacoredataset."EntityPolicies" entities_policies ON entities_policy_connector."table2_id" = entities_policies."id"
+LEFT JOIN schemacoredataset."Country" country ON entities."IdContry" = country."IdCountry" -- Changed to LEFT JOIN for safety
+JOIN
+    schemacoredataset."Taxonomy" taxonomy ON taxonomy."IdTaxonomy" = entities_taxonomy_connector.table2_id
+JOIN
+    schemacoredataset."Category" category ON taxonomy."Category" = category."IdCategory"
+JOIN 
+    schemacoredataset."Clusters" clusters ON clusters.id = category."Clusters_id"    
+WHERE
+    entities."TypeEntity" = 'TT22' AND entities."DateClosure" IS NULL
+GROUP BY
+    entities."IdEntity", entities."EntityName", entities."EntityURL", 
+    entities."YearFounded", entities."EntityDescription", entities."HQLocation", 
+    entities."Headcount", entities."Total_Products", entities."Total Funding", 
+    entities."EntityLogo", country."ISOCountryCode" -- List all non-aggregated columns explicitly
+ORDER BY
+    entities."IdEntity";`)
+    const response = allCompaniesData.rows
+
+    return { values: response, message: "Success" }
+  } catch (err) {
+    console.error(err)
+  }
+}
+
 module.exports = {
   main_v2,
   main_v3,
+  main_v4,
   getCompanies,
   getCompany,
-  getCompanyV3,
+  getCompanyV4,
   main_ai_v1,
+  main_ai_v2,
   getCompany_ai_1,
+  getCompany_ai_2,
 }

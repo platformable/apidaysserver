@@ -249,10 +249,22 @@ app.get("/v3/companies", validateJwt, async (req, res) => {
   }
 })
 
-app.get("/v3/companies/:company", validateJwt, async (req, res) => {
-  const company = req.params.company
+app.get("/v4/companies", validateJwt, async (req, res) => {
+  console.log("/v4/companies")
   try {
-    const data = await companiesData.getCompanyV3(company)
+    const data = await companiesData.main_v4()
+    res.send(data)
+  } catch (e) {
+    res.send({ message: "an error occurred", statusText: "Fail" }).status(500)
+  }
+})
+
+app.get("/v4/companies/:company", validateJwt, async (req, res) => {
+  const company = req.params.company
+  console.log("company param v4:", company)
+  try {
+    const data = await companiesData.getCompanyV4(company)
+
     res.send(data)
   } catch (error) {
     console.log("error", error)
@@ -263,7 +275,7 @@ app.get("/v3/companies/:company", validateJwt, async (req, res) => {
 app.get("/ailandscape/companies", validateJwt, async (req, res) => {
   console.log("/ailandscape/companies")
   try {
-    const data = await companiesData.main_ai_v1()
+    const data = await companiesData.main_ai_v2()
     res.send(data)
   } catch (e) {
     res.send({ message: "an error occurred", statusText: "Fail" }).status(500)
@@ -273,7 +285,7 @@ app.get("/ailandscape/companies", validateJwt, async (req, res) => {
 app.get("/ailandscape/companies/:company", validateJwt, async (req, res) => {
   const company = req.params.company
   try {
-    const data = await companiesData.getCompany_ai_1(company)
+    const data = await companiesData.getCompany_ai_2(company)
     res.send(data)
   } catch (error) {
     console.log("error", error)
