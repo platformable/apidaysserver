@@ -15,7 +15,7 @@ const newrelic = require("newrelic")
 
 newrelic.instrumentLoadedModule(
   "express", // the module's name, as a string
-  express // the module instance
+  express, // the module instance
 )
 
 const companiesData = require("./utils/v2/companiesFunctions")
@@ -178,76 +178,76 @@ async function authorize() {
   return authClient
 }
 
-app.get("/", async function (req, res) {
-  try {
-    await main(process.env.NEXT_PUBLIC_SHEET_ID)
-    res.status(200).send(sheetValues)
-  } catch (error) {
-    console.log("error", error)
-    res.send({ errorMessage: "An error ocurred, please try again" })
-  }
-})
+// app.get("/", async function (req, res) {
+//   try {
+//     await main(process.env.NEXT_PUBLIC_SHEET_ID)
+//     res.status(200).send(sheetValues)
+//   } catch (error) {
+//     console.log("error", error)
+//     res.send({ errorMessage: "An error ocurred, please try again" })
+//   }
+// })
 
-app.get("/companies", async function (req, res) {
-  try {
-    await getCompanies(process.NEXT_PUBLIC_SHEET_ID)
-    res.status(200).send(companyValues)
-  } catch (error) {
-    console.log("error", error)
-    res.send({
-      errorMessage:
-        "An error ocurred while fetching companies, please try again",
-    })
-  }
-})
+// app.get("/companies", async function (req, res) {
+//   try {
+//     await getCompanies(process.NEXT_PUBLIC_SHEET_ID)
+//     res.status(200).send(companyValues)
+//   } catch (error) {
+//     console.log("error", error)
+//     res.send({
+//       errorMessage:
+//         "An error ocurred while fetching companies, please try again",
+//     })
+//   }
+// })
 
-app.get("/v2/companies", validateJwt, async (req, res) => {
-  try {
-    const data = await companiesData.main_v2(
-      process.env.NEXT_PUBLIC_SHEET_ID_2023
-    )
-    res.send(data)
-  } catch (error) {
-    console.log("error", error)
-    res.send({ errorMessage: "An error ocurred, company" })
-  }
-})
+// app.get("/v2/companies", validateJwt, async (req, res) => {
+//   try {
+//     const data = await companiesData.main_v2(
+//       process.env.NEXT_PUBLIC_SHEET_ID_2023
+//     )
+//     res.send(data)
+//   } catch (error) {
+//     console.log("error", error)
+//     res.send({ errorMessage: "An error ocurred, company" })
+//   }
+// })
 
-app.get("/v2/companies/:company", validateJwt, async (req, res) => {
-  const company = req.params.company
-  try {
-    const data = await companiesData.getCompany(
-      process.env.NEXT_PUBLIC_SHEET_ID_2023,
-      company.toLocaleLowerCase()
-    )
-    res.send(data)
-  } catch (error) {
-    console.log("error", error)
-    res.send({ errorMessage: "An error ocurred, company" })
-  }
-})
+// app.get("/v2/companies/:company", validateJwt, async (req, res) => {
+//   const company = req.params.company
+//   try {
+//     const data = await companiesData.getCompany(
+//       process.env.NEXT_PUBLIC_SHEET_ID_2023,
+//       company.toLocaleLowerCase()
+//     )
+//     res.send(data)
+//   } catch (error) {
+//     console.log("error", error)
+//     res.send({ errorMessage: "An error ocurred, company" })
+//   }
+// })
 
-app.get("/v2/clusters/", validateJwt, async (req, res) => {
-  try {
-    const data = await clusterData.getClustersData(
-      process.env.NEXT_PUBLIC_SHEET_ID_2023
-    )
-    res.send(data)
-  } catch (error) {
-    console.log("error", error)
-    res.send({ errorMessage: "An error ocurred, company" })
-  }
-})
+// app.get("/v2/clusters/", validateJwt, async (req, res) => {
+//   try {
+//     const data = await clusterData.getClustersData(
+//       process.env.NEXT_PUBLIC_SHEET_ID_2023
+//     )
+//     res.send(data)
+//   } catch (error) {
+//     console.log("error", error)
+//     res.send({ errorMessage: "An error ocurred, company" })
+//   }
+// })
 
-app.get("/v3/companies", validateJwt, async (req, res) => {
-  console.log("/v3/companies")
-  try {
-    const data = await companiesData.main_v3()
-    res.send(data)
-  } catch (e) {
-    res.send({ message: "an error occurred", statusText: "Fail" }).status(500)
-  }
-})
+// app.get("/v3/companies", validateJwt, async (req, res) => {
+//   console.log("/v3/companies")
+//   try {
+//     const data = await companiesData.main_v3()
+//     res.send(data)
+//   } catch (e) {
+//     res.send({ message: "an error occurred", statusText: "Fail" }).status(500)
+//   }
+// })
 
 app.get("/v4/companies", validateJwt, async (req, res) => {
   console.log("/v4/companies")
